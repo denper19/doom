@@ -3,6 +3,7 @@ import time
 import numpy as np
 import pygame
 from attrs import define
+from pygame import surfarray
 
 map_width = 24
 map_height = 24
@@ -57,6 +58,8 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 running = True
 
+array = np.zeros((screen_width, screen_height, 3), np.int32)
+
 # initialize player
 player = Player(pos=np.array([22, 12]), dirn=np.array([-1, 0]), cam=np.array([0, 0.66]))
 
@@ -96,7 +99,7 @@ while running:
 
         if player.dirn[1] < 0:
             step_y = -1
-            side_dist_x = (player.pos[1] - map_pos[1]) * delta_dist_y
+            side_dist_y = (player.pos[1] - map_pos[1]) * delta_dist_y
         else:
             step_y = 1
             side_dist_y = (player.pos[1] - map_pos[1] + 1.0) * delta_dist_y
@@ -130,13 +133,15 @@ while running:
             draw_start = 0
 
         draw_end = (line_height // 2) + (screen_height // 2)
-        if draw_start >= screen_height:
+        if draw_end >= screen_height:
             draw_end = screen_height - 1
 
-    screen.fill("purple")
+        # print(x, int(draw_start), draw_end)
+        # print(type(x), type(draw_start), tdype(draw_end))
+        array[x, int(draw_start) : int(draw_end), :] = (255, 0, 0)
 
+    surfarray.blit_array(screen, array)
     pygame.display.flip()
-
     clock.tick(60)
 
 pygame.quit()
