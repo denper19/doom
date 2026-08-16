@@ -58,22 +58,85 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 running = True
 
+# pixel array
 array = np.zeros((screen_width, screen_height, 3), np.int32)
 
 # initialize player
-player = Player(pos=np.array([22, 12]), dirn=np.array([-1, 0]), cam=np.array([0, 0.66]))
+player = Player(
+    pos=np.array([22.0, 12.0]), dirn=np.array([-1.0, 0.0]), cam=np.array([0.0, 0.66])
+)
+
+# variables
+move_speed = (1 / 60) * 5
+rot_speed = (1 / 60) * 3
 
 # game loop
+old_time = time.time()
 while running:
 
     for event in pygame.event.get():
+
         if event.type == pygame.QUIT:
             running = False
 
+        elif event.type == pygame.KEYDOWN:
+
+            if event.key == pygame.K_UP:
+
+                print("keyup")
+                next_pos = player.pos + (player.dirn * move_speed)
+                next_map_pos = np.round(next_pos).astype(int)
+                if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
+                    player.pos[0] = next_pos[0]
+                if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
+                    player.pos[1] = next_pos[1]
+
+            if event.key == pygame.K_DOWN:
+
+                print("keydown")
+                next_pos = player.pos - (player.dirn * move_speed)
+                next_map_pos = np.round(next_pos).astype(int)
+                if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
+                    player.pos[0] = next_pos[0]
+                if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
+                    player.pos[1] = next_pos[1]
+
+            if event.key == pygame.K_RIGHT:
+
+                print("keyright")
+                old_dir = player.dirn.copy()
+                old_cam = player.cam.copy()
+
+                rot_mat = np.array(
+                    [
+                        [np.cos(-rot_speed), -np.sin(-rot_speed)],
+                        [np.sin(-rot_speed), +np.cos(-rot_speed)],
+                    ]
+                )
+
+                player.dirn = rot_mat @ old_dir
+                player.cam = rot_mat @ old_cam
+
+            if event.key == pygame.K_LEFT:
+
+                print("keyleft")
+                old_dir = player.dirn.copy()
+                old_cam = player.cam.copy()
+
+                rot_mat = np.array(
+                    [
+                        [np.cos(rot_speed), -np.sin(rot_speed)],
+                        [np.sin(rot_speed), +np.cos(rot_speed)],
+                    ]
+                )
+
+                player.dirn = rot_mat @ old_dir
+                player.cam = rot_mat @ old_cam
+    print(player)
     for x in range(screen_width):
 
         # 1. Get ray direction
-        camera_x = ((2 * x) / map_width) - 1
+        camera_x = ((2 * x) / screen_width) - 1
         ray_dir = player.dirn + player.cam * camera_x
 
         # 2. Setup DDA
@@ -140,8 +203,14 @@ while running:
         # print(type(x), type(draw_start), tdype(draw_end))
         array[x, int(draw_start) : int(draw_end), :] = (255, 0, 0)
 
+    frame_time = time.time() - old_time
+    old_time = time.time()
+    move_speed = frame_time * 5.0
+    rot_speed = frame_time * 3.0
+    # print(frame_time)
     surfarray.blit_array(screen, array)
     pygame.display.flip()
+    array.fill(0)
     clock.tick(60)
 
 pygame.quit()
