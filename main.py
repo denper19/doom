@@ -63,7 +63,7 @@ array = np.zeros((screen_width, screen_height, 3), np.int32)
 
 # initialize player
 player = Player(
-    pos=np.array([22.0, 12.0]), dirn=np.array([-1.0, 0.0]), cam=np.array([0.0, 0.66])
+    pos=np.array([13.0, 5.0]), dirn=np.array([-1.0, 0.0]), cam=np.array([0.0, 0.66])
 )
 
 # variables
@@ -85,7 +85,7 @@ while running:
 
                 print("keyup")
                 next_pos = player.pos + (player.dirn * move_speed)
-                next_map_pos = np.round(next_pos).astype(int)
+                next_map_pos = np.floor(next_pos).astype(int)
                 if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
                     player.pos[0] = next_pos[0]
                 if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
@@ -95,7 +95,7 @@ while running:
 
                 print("keydown")
                 next_pos = player.pos - (player.dirn * move_speed)
-                next_map_pos = np.round(next_pos).astype(int)
+                next_map_pos = np.floor(next_pos).astype(int)
                 if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
                     player.pos[0] = next_pos[0]
                 if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
@@ -142,25 +142,25 @@ while running:
         # 2. Setup DDA
 
         # which box we're in on the map
-        map_pos = np.round(player.pos).astype(int)
+        map_pos = np.floor(player.pos).astype(int)
 
         # length of ray from one x or y side to next x or y side
-        delta_dist_x = np.inf if player.dirn[0] == 0 else np.abs(1 / player.dirn[0])
-        delta_dist_y = np.inf if player.dirn[1] == 0 else np.abs(1 / player.dirn[1])
+        delta_dist_x = np.inf if ray_dir[0] == 0 else np.abs(1 / ray_dir[0])
+        delta_dist_y = np.inf if ray_dir[1] == 0 else np.abs(1 / ray_dir[1])
 
         # direction to take step in
         step_x = 0
         step_y = 0
 
         # get initial step and side distance values
-        if player.dirn[0] < 0:
+        if ray_dir[0] < 0:
             step_x = -1
             side_dist_x = (player.pos[0] - map_pos[0]) * delta_dist_x
         else:
             step_x = 1
             side_dist_x = (player.pos[0] - map_pos[0] + 1.0) * delta_dist_x
 
-        if player.dirn[1] < 0:
+        if ray_dir[1] < 0:
             step_y = -1
             side_dist_y = (player.pos[1] - map_pos[1]) * delta_dist_y
         else:
@@ -199,9 +199,24 @@ while running:
         if draw_end >= screen_height:
             draw_end = screen_height - 1
 
+        val = world.MAP[map_pos[0], map_pos[1]]
+        if val == 0:
+            color = (255, 255, 255)
+        elif val == 1:
+            color = (255, 0, 0)
+        elif val == 2:
+            color = (0, 255, 0)
+        elif val == 3:
+            color = (0, 0, 255)
+        elif val == 4:
+            color = (255, 0, 255)
+        elif val == 5:
+            color = (255, 255, 0)
+        if side == 0:
+            color = tuple(x // 2 for x in color)
         # print(x, int(draw_start), draw_end)
         # print(type(x), type(draw_start), tdype(draw_end))
-        array[x, int(draw_start) : int(draw_end), :] = (255, 0, 0)
+        array[x, int(draw_start) : int(draw_end), :] = color
 
     frame_time = time.time() - old_time
     old_time = time.time()
