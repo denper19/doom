@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 import pygame
 from attrs import define
@@ -67,75 +65,68 @@ player = Player(
 )
 
 # variables
-move_speed = (1 / 60) * 5
-rot_speed = (1 / 60) * 3
+move_speed = (1 / 60) * 5.0
+rot_speed = (1 / 60) * 3.0
 
 # game loop
-old_time = time.time()
 while running:
 
     for event in pygame.event.get():
-
         if event.type == pygame.QUIT:
             running = False
 
-        elif event.type == pygame.KEYDOWN:
+    keys = pygame.key.get_pressed()
 
-            if event.key == pygame.K_UP:
+    if keys[pygame.K_UP]:
+        next_pos = player.pos + (player.dirn * move_speed)
+        next_map_pos = np.floor(next_pos).astype(int)
+        if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
+            player.pos[0] = next_pos[0]
+        if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
+            player.pos[1] = next_pos[1]
 
-                print("keyup")
-                next_pos = player.pos + (player.dirn * move_speed)
-                next_map_pos = np.floor(next_pos).astype(int)
-                if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
-                    player.pos[0] = next_pos[0]
-                if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
-                    player.pos[1] = next_pos[1]
+    if keys[pygame.K_DOWN]:
+        next_pos = player.pos - (player.dirn * move_speed)
+        next_map_pos = np.floor(next_pos).astype(int)
+        if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
+            player.pos[0] = next_pos[0]
+        if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
+            player.pos[1] = next_pos[1]
 
-            if event.key == pygame.K_DOWN:
+    if keys[pygame.K_RIGHT]:
+        old_dir = player.dirn.copy()
+        old_cam = player.cam.copy()
 
-                print("keydown")
-                next_pos = player.pos - (player.dirn * move_speed)
-                next_map_pos = np.floor(next_pos).astype(int)
-                if world.MAP[next_map_pos[0], int(player.pos[1])] == False:
-                    player.pos[0] = next_pos[0]
-                if world.MAP[int(player.pos[0]), next_map_pos[1]] == False:
-                    player.pos[1] = next_pos[1]
+        rot_mat = np.array(
+            [
+                [np.cos(-rot_speed), -np.sin(-rot_speed)],
+                [np.sin(-rot_speed), +np.cos(-rot_speed)],
+            ]
+        )
 
-            if event.key == pygame.K_RIGHT:
+        player.dirn = rot_mat @ old_dir
+        player.cam = rot_mat @ old_cam
 
-                print("keyright")
-                old_dir = player.dirn.copy()
-                old_cam = player.cam.copy()
+    if keys[pygame.K_LEFT]:
+        old_dir = player.dirn.copy()
+        old_cam = player.cam.copy()
 
-                rot_mat = np.array(
-                    [
-                        [np.cos(-rot_speed), -np.sin(-rot_speed)],
-                        [np.sin(-rot_speed), +np.cos(-rot_speed)],
-                    ]
-                )
+        rot_mat = np.array(
+            [
+                [np.cos(rot_speed), -np.sin(rot_speed)],
+                [np.sin(rot_speed), +np.cos(rot_speed)],
+            ]
+        )
 
-                player.dirn = rot_mat @ old_dir
-                player.cam = rot_mat @ old_cam
+        player.dirn = rot_mat @ old_dir
+        player.cam = rot_mat @ old_cam
 
-            if event.key == pygame.K_LEFT:
-
-                print("keyleft")
-                old_dir = player.dirn.copy()
-                old_cam = player.cam.copy()
-
-                rot_mat = np.array(
-                    [
-                        [np.cos(rot_speed), -np.sin(rot_speed)],
-                        [np.sin(rot_speed), +np.cos(rot_speed)],
-                    ]
-                )
-
-                player.dirn = rot_mat @ old_dir
-                player.cam = rot_mat @ old_cam
     print(player)
-    for x in range(screen_width):
+
+    for w in range(screen_width):
 
         # 1. Get ray direction
+        x = float(w)
         camera_x = ((2 * x) / screen_width) - 1
         ray_dir = player.dirn + player.cam * camera_x
 
@@ -145,8 +136,9 @@ while running:
         map_pos = np.floor(player.pos).astype(int)
 
         # length of ray from one x or y side to next x or y side
-        delta_dist_x = np.inf if ray_dir[0] == 0 else np.abs(1 / ray_dir[0])
-        delta_dist_y = np.inf if ray_dir[1] == 0 else np.abs(1 / ray_dir[1])
+        ray_len = 1  # np.linalg.norm(ray_dir)
+        delta_dist_x = np.inf if ray_dir[0] == 0 else np.abs(ray_len / ray_dir[0])
+        delta_dist_y = np.inf if ray_dir[1] == 0 else np.abs(ray_len / ray_dir[1])
 
         # direction to take step in
         step_x = 0
@@ -216,13 +208,8 @@ while running:
             color = tuple(x // 2 for x in color)
         # print(x, int(draw_start), draw_end)
         # print(type(x), type(draw_start), tdype(draw_end))
-        array[x, int(draw_start) : int(draw_end), :] = color
+        array[w, int(draw_start) : int(draw_end), :] = color
 
-    frame_time = time.time() - old_time
-    old_time = time.time()
-    move_speed = frame_time * 5.0
-    rot_speed = frame_time * 3.0
-    # print(frame_time)
     surfarray.blit_array(screen, array)
     pygame.display.flip()
     array.fill(0)
