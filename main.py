@@ -63,26 +63,36 @@ running = True
 # pixel array
 array = np.zeros((screen_width, screen_height, 3), np.int32)
 
-textures = np.zeros((8, texture_width * texture_height), np.float32)
+textures = np.zeros((8, texture_width * texture_height, 3), np.float32)
 
-for x in range(texture_width):
-    for y in range(texture_height):
-        xor_color = (x * 256 // texture_width) ^ (y * 256 // texture_height)
-        ycolor = y * 256 // texture_height
-        xycolor = y * 128 // texture_height + x * 128 // texture_width
-        textures[0][texture_width * y + x] = (
-            65536 * 254 * (x != y and x != texture_width - y)
-        )
-        textures[1][texture_width * y + x] = xycolor + 256 * xycolor + 65536 * xycolor
-        textures[2][texture_width * y + x] = 256 * xycolor + 65536 * xycolor
-        textures[3][texture_width * y + x] = (
-            xor_color + 256 * xor_color + 65536 * xor_color
-        )
-        textures[4][texture_width * y + x] = 256 * xor_color
-        textures[5][texture_width * y + x] = 65536 * 192 * (x % 16 != 0 and y % 16 != 0)
-        textures[6][texture_width * y + x] = 65536 * ycolor
-        textures[7][texture_width * y + x] = 128 + 256 * 128 + 65536 * 128
-
+# for x in range(texture_width):
+#    for y in range(texture_height):
+#        xor_color = (x * 256 // texture_width) ^ (y * 256 // texture_height)
+#        ycolor = y * 256 // texture_height
+#        xycolor = y * 128 // texture_height + x * 128 // texture_width
+#        textures[0][texture_width * y + x] = (
+#            65536 * 254 * (x != y and x != texture_width - y)
+#        )
+#        textures[1][texture_width * y + x] = xycolor + 256 * xycolor + 65536 * xycolor
+#        textures[2][texture_width * y + x] = 256 * xycolor + 65536 * xycolor
+#        textures[3][texture_width * y + x] = (
+#            xor_color + 256 * xor_color + 65536 * xor_color
+#        )
+#        textures[4][texture_width * y + x] = 256 * xor_color
+#        textures[5][texture_width * y + x] = 65536 * 192 * (x % 16 != 0 and y % 16 != 0)
+#        textures[6][texture_width * y + x] = 65536 * ycolor
+#        textures[7][texture_width * y + x] = 128 + 256 * 128 + 65536 * 128
+#
+textures[0] = surfarray.array3d(pygame.image.load("pics/eagle.png")).reshape(-1, 3)
+textures[1] = surfarray.array3d(pygame.image.load("pics/redbrick.png")).reshape(-1, 3)
+textures[2] = surfarray.array3d(pygame.image.load("pics/purplestone.png")).reshape(
+    -1, 3
+)
+textures[3] = surfarray.array3d(pygame.image.load("pics/greystone.png")).reshape(-1, 3)
+textures[4] = surfarray.array3d(pygame.image.load("pics/bluestone.png")).reshape(-1, 3)
+textures[5] = surfarray.array3d(pygame.image.load("pics/mossy.png")).reshape(-1, 3)
+textures[6] = surfarray.array3d(pygame.image.load("pics/wood.png")).reshape(-1, 3)
+textures[7] = surfarray.array3d(pygame.image.load("pics/colorstone.png")).reshape(-1, 3)
 
 # initialize player
 player = Player(
@@ -241,12 +251,14 @@ while running:
         for y in range(int(draw_start), int(draw_end)):
             tex_y = int(tex_pos) & (texture_height - 1)
             tex_pos += step
-            packed = int(textures[tex_num][texture_width * tex_y + tex_x])
-            color = (
-                (packed >> 16) & 0xFF,
-                (packed >> 8) & 0xFF,
-                packed & 0xFF,
-            )
+            # packed = int(textures[tex_num][texture_width * tex_y + tex_x])
+            packed = textures[tex_num][texture_width * tex_y + tex_x, :]
+            #            color = (
+            #                (packed >> 16) & 0xFF,
+            #                (packed >> 8) & 0xFF,
+            #                packed & 0xFF,
+            #            )
+            color = packed
             if side == 1:
                 color = tuple(c // 2 for c in color)
             array[w, y, :] = color
