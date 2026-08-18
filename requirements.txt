@@ -1,3 +1,5 @@
 numpy
 pygame
 attrs
+mypy
+pylint
